@@ -8,6 +8,7 @@ from functools import wraps
 from config import API_KEY
 app = Flask(__name__)
 
+
 #Configure application settings
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///capstone'
 app.app_context().push()
