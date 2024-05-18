@@ -6,21 +6,28 @@ from models import db, connect_db, CreateUsers
 from forms import AddUsers, Login, SearchForm
 from functools import wraps
 from config import API_KEY
-app = Flask(__name__)
+
+def create_app():
+    app = Flask(__name__)
 
 
 #Configure application settings
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///capstone'
-app.app_context().push()
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ECHO'] = True
-app.config['SECRET_KEY'] = 'your_secret_key_here'
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///capstone'
+    app.app_context().push()
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_ECHO'] = True
+    app.config['SECRET_KEY'] = 'your_secret_key_here'
+    app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 #Connect to the database and create all tables if they don't exist
-connect_db(app)
-with app.app_context():
-    db.create_all()
+    connect_db(app)
+    with app.app_context():
+        db.create_all()
+    return app
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=True)
 
 #Render the home page
 @app.route('/')
