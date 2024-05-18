@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Page</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand navbar-dark bg-primary">
+    <h6 class="navbar-brand">News</h6>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            {% if session.logged_in %}
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Hello, {{ session.first_name }} {{ session.last_name }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                </li>
+            {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+<!-- End Navbar -->
+
+<div class="container mt-5">
+   {% for category, message in get_flashed_messages(with_categories=true) %} 
+  <div class="alert alert-{{category}}">
+    {{message}}
+  </div>
+  {% endfor %}
+    <h2 class="mb-4">Search for News</h2>
+    <form id="search-form">
+        {{ form.hidden_tag() }}
+        <div class="input-group mb-3">
+            {{ form.query(class="form-control", id="search-query", placeholder="Enter search term") }}
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-outline-secondary">Search</button>
+            </div>
+        </div>
+    </form>
+    <!-- Div to show search results -->
+    <div id="search-results"></div>
+</div>
+<script>
+  $(document).ready(function() {
+      $('#search-form').submit(function(event) {
+          event.preventDefault(); // Prevent the default form submission
+          var query = $('#search-query').val(); // Get the search query
+          var csrf_token = $('input[name="csrf_token"]').val(); // Get the CSRF token from the hidden input field
+
+          // Send the search query to the Flask backend using AJAX
+          $.ajax({
+              url: '/search/results',
+              type: 'POST', // Changed to POST to include the CSRF token
+              data: JSON.stringify({
+                  query: query,
+                  csrf_token: csrf_token // Include the CSRF token in the data object
+              }),
+              contentType: 'application/json;charset=UTF-8', // Set the content type to application/json
+              dataType: 'json',
+              success: function(response) {
+                  // Handle the response data
+                  var resultsContainer = $('#search-results');
+                  resultsContainer.empty(); // Clear previous results
+
+                  // Iterate over each article in the response
+                  response.articles.forEach(function(article) {
+                      // Create HTML for the article
+                      var articleHtml = `
+                          <div class="article">
+                              <h2><a href="${article.url}" target="_blank">${article.title}</a></h2>
+                              <p>${article.description}</p>
+                              <img src="${article.urlToImage}" alt="Article Image" style="width:100%;">
+                              <p>Published at: ${new Date(article.publishedAt).toLocaleString()}</p>
+                              <p>Author: ${article.author || 'Unknown'}</p>
+                          </div>
+                          <hr>`;
+                      // Append the article HTML to the results container
+                      resultsContainer.append(articleHtml);
+                  });
+              },
+              error: function(xhr, status, error) {
+                  // Handle any errors
+                  console.error("Error occurred: " + error);
+                  resultsContainer.text('An error occurred while fetching the results.');
+              }
+          });
+      });
+  });
+</script>
+
+
+</body>
+</html>
