@@ -23,25 +23,21 @@ def create_app():
     connect_db(app)
     with app.app_context():
         db.create_all()
-    return app
 
-if __name__ == "__main__":
-    app = create_app()
-    app.run(debug=True)
 
 #Render the home page
-@app.route('/')
-def home_page():
-    return render_template("index.html")
+    @app.route('/')
+    def home_page():
+        return render_template("index.html")
 
-@app.route("/create/account", methods=["GET", "POST"])
-def create_account():
-    form = AddUsers()  
+    @app.route("/create/account", methods=["GET", "POST"])
+    def create_account():
+        form = AddUsers()  
 
-    if form.is_submitted():
-        if form.validate():
+        if form.is_submitted():
+            if form.validate():
             #Generate a hashed password for security
-            hashed_password = generate_password_hash(form.create_password.data, method='pbkdf2:sha256:15000')
+                hashed_password = generate_password_hash(form.create_password.data, method='pbkdf2:sha256:15000')
             
             #Create a new user instance
             new_user = CreateUsers(
@@ -69,14 +65,14 @@ def create_account():
                 for error in errors:
                     flash(f"Error in {field}: {error}", 'danger')
     
-    return render_template('create_acc_form.html', form=form)
+        return render_template('create_acc_form.html', form=form)
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    form = Login()
-    if form.validate_on_submit():
-        username = form.username.data
-        password = form.password.data
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        form = Login()
+        if form.validate_on_submit():
+            username = form.username.data
+            password = form.password.data
 
         user = CreateUsers.query.filter_by(username=username).first()
 
@@ -96,66 +92,66 @@ def login():
         else:
             flash("User not found!", 'danger')
         
-        return redirect(url_for('login'))
-    return render_template('login_form.html', form=form)
-
-
-def login_required(f):
-    #Decorator to protect routes that require authentication
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'logged_in' not in session:
-            flash("Please log in to access this page.", 'warning')
             return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
+        return render_template('login_form.html', form=form)
 
-@app.route('/login/account')
-@login_required
-def your_account():
+
+    def login_required(f):
+    #Decorator to protect routes that require authentication
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'logged_in' not in session:
+                flash("Please log in to access this page.", 'warning')
+                return redirect(url_for('login'))
+            return f(*args, **kwargs)
+        return decorated_function
+
+    @app.route('/login/account')
+    @login_required
+    def your_account():
     #Account details page
-    form = SearchForm()
-    first_name = session.get('first_name', '')
-    last_name = session.get('last_name', '')
-    return render_template("your_account.html", form=form, first_name=first_name, last_name=last_name)
+        form = SearchForm()
+        first_name = session.get('first_name', '')
+        last_name = session.get('last_name', '')
+        return render_template("your_account.html", form=form, first_name=first_name, last_name=last_name)
 
-@app.route('/debug-session')
-@login_required
-def debug_session():
+    @app.route('/debug-session')
+    @login_required
+    def debug_session():
     #A debug route to display session details
-    return jsonify(dict(session))
+        return jsonify(dict(session))
 
-@app.route("/logout")
-@login_required
-def logout():
+    @app.route("/logout")
+    @login_required
+    def logout():
     # Clear all keys from the session
-    session.clear()
-    flash("Logged out successfully!", "info") 
-    return redirect(url_for('login'))
+        session.clear()
+        flash("Logged out successfully!", "info") 
+        return redirect(url_for('login'))
 
 
-@app.route('/search/results', methods=['GET', 'POST'])
-@login_required
-def search_results():
-    if request.method=='POST':
-        data = request.json
-        query = data.get('query')
+    @app.route('/search/results', methods=['GET', 'POST'])
+    @login_required
+    def search_results():
+        if request.method=='POST':
+            data = request.json
+            query = data.get('query')
 
-    else:
-        query=request.args.get('query')
+        else:
+          query=request.args.get('query')
     
     # Construct the URL with the search query and API key
-    url = f'https://newsapi.org/v2/everything?q={query}&apiKey={API_KEY}'
+        url = f'https://newsapi.org/v2/everything?q={query}&apiKey={API_KEY}'
 
     # Make the GET request to the NewsAPI
-    response = requests.get(url)
-    data = response.json()
+        response = requests.get(url)
+        data = response.json()
     
 
     # Return the data as a JSON response
-    return jsonify(data)
+        return jsonify(data)
 
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    return app 
+# if __name__ == '__main__':
+#     app.run(debug=True)
 
